@@ -8,8 +8,10 @@
         "-fdiagnostics-color=always",
         "-g",
         "${file}",
+        "-lmpfr",
+        "-lgmp",
         "-o",
-        "${fileDirname}\\${fileBasenameNoExtension}"
+        "${fileDirname}\\${fileBasenameNoExtension}.exe"
       ],
       "options": {
         "cwd": "${fileDirname}"
