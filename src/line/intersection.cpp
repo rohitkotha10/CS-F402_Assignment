@@ -93,11 +93,23 @@ int main() {
 
     while (!events.empty()) {
         if (events.top().first.type == PTYPE::left) {
-            sweepStatus.insert(make_pair(events.top().second, events.top().first.y));
-            int l = 2;
+            auto it = sweepStatus.insert(make_pair(events.top().second, events.top().first.y));
+
+            it++;  // cout << *(it++)->second << endl;
         }
         events.pop();
     }
     logStatus(ofs, lines, sweepStatus);
+    auto it = sweepStatus.begin();
+    it++;
+    it++;
+    if (it != sweepStatus.end()) { cout << it->first << "curr" << it->second << endl; }
+    if (it != sweepStatus.begin()) {
+        auto prev = it--;
+        cout << it->first << "pred" << it->second << endl;
+        it++;
+    }
+    it++;
+    if (it != sweepStatus.end()) { cout << it->first << "succ" << it->second << endl; }
     ofs << "OK" << endl;
 }

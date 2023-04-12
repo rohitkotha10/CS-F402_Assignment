@@ -8,8 +8,8 @@
         "-fdiagnostics-color=always",
         "-g",
         "${file}",
-        "-lmpfr",
-        "-lgmp",
+        // "-lmpfr",
+        // "-lgmp",
         "-o",
         "${fileDirname}\\${fileBasenameNoExtension}.exe"
       ],
