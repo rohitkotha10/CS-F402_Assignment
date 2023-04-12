@@ -17,7 +17,7 @@ BinPackParameters: 'false'
 BreakAfterJavaFieldAnnotations: 'true'
 BreakBeforeTernaryOperators: 'true'
 BreakConstructorInitializers: BeforeColon
-ColumnLimit: '120'
+ColumnLimit: '90'
 Cpp11BracedListStyle: 'true'
 ExperimentalAutoDetectBinPacking: 'false'
 FixNamespaceComments: 'true'
