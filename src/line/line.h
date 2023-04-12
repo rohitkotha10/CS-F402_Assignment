@@ -6,10 +6,20 @@
 
 using namespace std;
 
+enum class PTYPE { left, right, intersection, nota };
+
 struct Point {
-    Point() : x {0}, y {0} {};
-    Point(double x, double y) : x {x}, y {y} {};
+    Point() {};
+    Point(double x, double y) : x {x}, y {y}, type {PTYPE::nota} {};
+    Point(double x, double y, PTYPE cat) : x {0}, y {0}, type {cat} {};
     double x, y;
+    PTYPE type;
+};
+
+struct Line {
+    Line() {};
+    Line(Point a, Point b) : left {a}, right {b} {};
+    Point left, right;
 };
 
 Point operator+(const Point& a, const Point& b) {
@@ -37,11 +47,3 @@ istream& operator>>(istream& is, Point& a) {
     is >> a.x >> a.y;
     return is;
 }
-
-struct Line {
-    Line() {};
-    Line(Point a, Point b) : start {a}, end {b} {};
-    Point atParameter(double x) { return (1 - x) * start + x * end; };
-    Point start;
-    Point end;
-};
