@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <utility>
+#include <memory>
 #include <vector>
 #include <queue>
 #include <set>
@@ -57,23 +58,49 @@ struct comp {
 };
 
 struct sweepcomp {
-    bool operator()(const Line& a, const Line& b) const { return a.cury > b.cury; };
+    bool operator()(const shared_ptr<Line>& a, const shared_ptr<Line>& b) const { return a->cury > b->cury; };
 };
 
+vector<shared_ptr<Line>> readLines(istream& instream) {
+    int n;
+    instream >> n;
+    vector<shared_ptr<Line>> ans(n);
+    for (int i = 0; i < n; i++) { ans[i] = make_shared<Line>(); }
+
+    for (int i = 0; i < n; i++) {
+        Point a, b;
+        instream >> a >> b;
+        if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
+            ans[i]->left = a;
+            ans[i]->right = b;
+        } else {
+            ans[i]->left = b;
+            ans[i]->right = a;
+        };
+        ans[i]->left.type = PTYPE::left;
+        ans[i]->right.type = PTYPE::right;
+    }
+
+    return ans;
+}
+
 void logInput(
-    ostream& ofs, const vector<Line>& lines, priority_queue<pair<Point, int>, vector<pair<Point, int>>, comp> events) {
+    ostream& ofs,
+    const vector<shared_ptr<Line>>& lines,
+    priority_queue<pair<Point, int>, vector<pair<Point, int>>, comp> events) {
+    ofs << "Input Log" << endl;
     ofs << lines.size() << endl;
-    for (int i = 0; i < lines.size(); i++) { ofs << lines[i] << ' ' << i << endl; }
+    for (int i = 0; i < lines.size(); i++) { ofs << *lines[i] << ' ' << i << endl; }
     while (!events.empty()) {
         ofs << events.top().first << ' ' << events.top().second << endl;
         events.pop();
     }
 }
 
-void logStatus(ostream& ofs, const vector<Line>& lines, set<Line, sweepcomp> sweepStatus) {
-    ofs << lines.size() << endl;
-    for (int i = 0; i < lines.size(); i++) { ofs << lines[i].left << ' ' << i << endl; }
-    for (auto& i: sweepStatus) { ofs << i << ' ' << i.cury << endl; }
+void logStatus(ostream& ofs, set<shared_ptr<Line>, sweepcomp> sweepStatus) {
+    ofs << "Sweep Status Log" << endl;
+    ofs << sweepStatus.size() << endl;
+    for (auto i: sweepStatus) { ofs << *i << ' ' << i->cury << endl; }
 }
 
 double cross(const Point& a, const Point& b) {
@@ -113,70 +140,46 @@ Point intersect(const Line& a, const Line& b) {
     return Point(x, y, PTYPE::intersection);
 }
 
-vector<Line> readLines(istream& instream) {
-    int n;
-    instream >> n;
-    vector<Line> ans(n);
-
-    for (int i = 0; i < n; i++) {
-        Point a, b;
-        instream >> a >> b;
-        if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
-            ans[i].left = a;
-            ans[i].right = b;
-        } else {
-            ans[i].left = b;
-            ans[i].right = a;
-        };
-        ans[i].left.type = PTYPE::left;
-        ans[i].right.type = PTYPE::right;
-    }
-
-    return ans;
-}
-
 int main() {
-    ifstream ifs("linedata.txt");
-    ofstream testLog("log.txt");
-    ofstream ofs("out.txt");
-    vector<Line> lines = readLines(ifs);
+    ifstream ifs;
+    ofstream ofs;
+
+    ifs.open("input.txt");
+    vector<shared_ptr<Line>> lines = readLines(ifs);
+    ifs.close();
+
     int n = lines.size();
 
+    // event queue to get points stl priority-queue based on heap
     priority_queue<pair<Point, int>, vector<pair<Point, int>>, comp> events;
     for (int i = 0; i < n; i++) {
-        events.push(make_pair(lines[i].left, i));
-        events.push(make_pair(lines[i].right, i));
+        events.push(make_pair(lines[i]->left, i));
+        events.push(make_pair(lines[i]->right, i));
     }
 
-    logInput(testLog, lines, events);
+    ofs.open("out.txt", ios_base::out);
+    logInput(ofs, lines, events);
+    ofs.close();
 
-    set<Line, sweepcomp> sweepStatus;
+    // sweep status in an ordered dictionary or stl set based on balanced tree
+    set<shared_ptr<Line>, sweepcomp> sweepStatus;
 
     while (!events.empty()) {
-        Line& cur = lines[events.top().second];
+        shared_ptr<Line> cur = lines[events.top().second];
         if (events.top().first.type == PTYPE::left) {
-            cur.cury = cur.left.y;
-            auto it = sweepStatus.insert(cur);
-
+            cur->cury = cur->left.y;
+            sweepStatus.insert(cur);
         } else if (events.top().first.type == PTYPE::right) {
-            auto it = sweepStatus.find(cur);
-
-            sweepStatus.erase(it);
+            // auto it = sweepStatus.find(cur);
+            // sweepStatus.erase(it);
         } else if (events.top().first.type == PTYPE::intersection) {
             // the intersection is always for the top line, so it is exchanged with line below
             // this below line will be the successor
-
-            auto succ = sweepStatus.find(cur);
-            auto it = succ;
-            succ++;
         }
         events.pop();
     }
-    if (checkIntersection(lines[0], lines[1])) {
-        Point trial = intersect(lines[0], lines[1]);
-        cout << lines[0] << ' ' << lines[1] << endl;
-        cout << trial << endl;
-    }
 
-    logStatus(ofs, lines, sweepStatus);
+    ofs.open("out.txt", ios_base::app);
+    logStatus(ofs, sweepStatus);
+    ofs.close();
 }
