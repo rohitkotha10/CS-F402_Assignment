@@ -147,9 +147,10 @@ Point intersect(const Line& a, const Line& b) {
 void processEvent(shared_ptr<Line> fir, shared_ptr<Line> sec, event_queue& events) {
     // fir is always top of sec int sweep line status
     // so that the intersection association of point is with top line
+    double minx = events.top().first.x;
     if (checkIntersection(*fir, *sec)) {
         Point ans = intersect(*fir, *sec);
-        events.push(make_pair(ans, fir));
+        if (ans.x > minx) events.push(make_pair(ans, fir));
     }
 }
 
@@ -173,7 +174,6 @@ shared_ptr<Line> getSucc(shared_ptr<Line> cur, const sweep_status& sweepline) {
 void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
     shared_ptr<Line> prev = getPred(cur, sweepline);
     shared_ptr<Line> succ = getSucc(cur, sweepline);
-
     if (prev != nullptr && succ != nullptr) {
         // cur in the middle
         processEvent(prev, cur, events);
@@ -235,6 +235,13 @@ int main() {
         } else if (events.top().first.type == PTYPE::right) {
             processRightEvents(cur, sweepline, events);
             auto it = sweepline.find(cur);
+            if (events.size() == 6) {
+                cout << *sweepline.begin() << endl;
+                cout << cur << endl;
+                auto it = sweepline.find(cur);
+                cout << *it << endl;
+                cout << "OK" << endl;
+            }
             sweepline.erase(it);
         } else if (events.top().first.type == PTYPE::intersection) {
             // the intersection is always for the top line, so it is exchanged with line below
