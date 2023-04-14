@@ -140,11 +140,27 @@ Point intersect(const Line& a, const Line& b) {
     return Point(x, y, PTYPE::intersection);
 }
 
+void processLeftEvents(shared_ptr<Line>& cur, set<shared_ptr<Line>, sweepcomp>& sweepStatus, int cnt) {
+    auto it = sweepStatus.find(cur);
+    auto prev = it;
+    if (it != sweepStatus.begin()) prev--;
+    auto succ = it;
+    succ++;
+
+    ofstream ofs;
+    ofs.open("out.txt", ios_base::app);
+    ofs << cnt << endl;
+    ofs << "CUR " << **it << endl;
+    if (it != sweepStatus.begin()) ofs << "PREV " << **prev << endl;
+    if (succ != sweepStatus.end()) ofs << "SUCC " << **succ << endl;
+    ofs.close();
+}
+
 int main() {
     ifstream ifs;
     ofstream ofs;
 
-    ifs.open("input.txt");
+    ifs.open("testLines/1/input.txt");
     vector<shared_ptr<Line>> lines = readLines(ifs);
     ifs.close();
 
@@ -164,14 +180,16 @@ int main() {
     // sweep status in an ordered dictionary or stl set based on balanced tree
     set<shared_ptr<Line>, sweepcomp> sweepStatus;
 
+    int cnt = 1;
     while (!events.empty()) {
         shared_ptr<Line> cur = lines[events.top().second];
         if (events.top().first.type == PTYPE::left) {
             cur->cury = cur->left.y;
             sweepStatus.insert(cur);
+            processLeftEvents(cur, sweepStatus, cnt++);
         } else if (events.top().first.type == PTYPE::right) {
-            // auto it = sweepStatus.find(cur);
-            // sweepStatus.erase(it);
+            auto it = sweepStatus.find(cur);
+            sweepStatus.erase(it);
         } else if (events.top().first.type == PTYPE::intersection) {
             // the intersection is always for the top line, so it is exchanged with line below
             // this below line will be the successor
