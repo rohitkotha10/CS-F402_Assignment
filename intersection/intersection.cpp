@@ -144,10 +144,16 @@ Point intersect(const Line& a, const Line& b) {
     return Point(x, y, PTYPE::intersection);
 }
 
-void checkEvent(shared_ptr<Line> fir, shared_ptr<Line> sec) {
+void processEvent(shared_ptr<Line> fir, shared_ptr<Line> sec, event_queue& events) {
+    // fir is always top of sec int sweep line status
+    // so that the intersection association of point is with top line
+    if (checkIntersection(*fir, *sec)) {
+        Point ans = intersect(*fir, *sec);
+        events.push(make_pair(ans, fir));
+    }
 }
 
-void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline) {
+void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
     auto it = sweepline.find(cur);
     auto prev = it;
     if (it != sweepline.begin()) prev--;
@@ -158,22 +164,31 @@ void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline) {
     if (it != sweepline.begin()) pos++, hasPrev = 1;
     if (succ != sweepline.end()) pos++, hasPrev = 0;
 
-    // if (pos == 2) {
-    //     // cur in the middle
-    // } else if (pos == 1 && hasPrev == 1) {
-    //     // is in the bottom
-    //     checkEvent(*it, *prev);
-    // } else {
-    //     // is in the top
-    // }
+    if (pos == 2) {
+        // cur in the middle
+        processEvent(*prev, *it, events);
+        processEvent(*it, *succ, events);
+    } else if (pos == 1 && hasPrev == 1) {
+        // is in the bottom
+        processEvent(*prev, *it, events);
+    } else if (pos == 1 && hasPrev == 0) {
+        // is in the top
+        processEvent(*it, *succ, events);
+    }
 
-    ofstream ofs;
-    ofs.open("out.txt", ios_base::app);
-    ofs << "CUR " << **it << endl;
-    if (it != sweepline.begin()) ofs << "PREV " << **prev << endl;
-    if (succ != sweepline.end()) ofs << "SUCC " << **succ << endl;
-    ofs << endl;
-    ofs.close();
+    // ofstream ofs;
+    // ofs.open("out.txt", ios_base::app);
+    // ofs << "CUR " << **it << endl;
+    // if (it != sweepline.begin()) ofs << "PREV " << **prev << endl;
+    // if (succ != sweepline.end()) ofs << "SUCC " << **succ << endl;
+    // ofs << endl;
+    // ofs.close();
+}
+
+void processRightEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
+}
+
+void processInterEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
 }
 
 int main() {
@@ -198,13 +213,16 @@ int main() {
         if (events.top().first.type == PTYPE::left) {
             cur->cury = cur->left.y;
             sweepline.insert(cur);
-            processLeftEvents(cur, sweepline);
+            processLeftEvents(cur, sweepline, events);
         } else if (events.top().first.type == PTYPE::right) {
+            processRightEvents(cur, sweepline, events);
             auto it = sweepline.find(cur);
             sweepline.erase(it);
         } else if (events.top().first.type == PTYPE::intersection) {
             // the intersection is always for the top line, so it is exchanged with line below
             // this below line will be the successor
+            cout << events.top().first << endl;
+            processInterEvents(cur, sweepline, events);
         }
         events.pop();
     }
