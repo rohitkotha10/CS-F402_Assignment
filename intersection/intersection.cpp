@@ -6,9 +6,6 @@
 #include <queue>
 #include <set>
 
-#define event_queue  priority_queue<pair<Point, shared_ptr<Line>>, vector<pair<Point, shared_ptr<Line>>>, comp>
-#define sweep_status set<shared_ptr<Line>, sweepcomp>
-
 using namespace std;
 
 enum class PTYPE { left, right, intersection };
@@ -56,21 +53,50 @@ istream& operator>>(istream& is, Line& a) {
     return is;
 }
 
-struct comp {
+struct event_comp {
     bool operator()(const pair<Point, shared_ptr<Line>>& a, const pair<Point, shared_ptr<Line>>& b) const {
-        return a.first.x > b.first.x;
+        return a.first.x < b.first.x || (a.first.x == b.first.x && a.first.y < b.first.y);
     };
 };
 
-struct sweepcomp {
+struct sweep_comp {
     bool operator()(const shared_ptr<Line> a, const shared_ptr<Line> b) const { return a->cury > b->cury; };
 };
 
-event_queue readLines(istream& instream) {
+class event_queue {
+public:
+    void readLines(istream& ifs);
+
+    void push(pair<Point, shared_ptr<Line>> cur) { data.insert(cur); };
+    void erase(pair<Point, shared_ptr<Line>> cur);
+    pair<Point, shared_ptr<Line>> top() { return *(data.begin()); };
+    void pop() { data.erase(data.begin()); };
+
+    int size() const { return data.size(); };
+    bool empty() const { return data.empty(); };
+
+private:
+    set<pair<Point, shared_ptr<Line>>, event_comp> data;
+};
+
+class sweep_status {
+public:
+    void push(shared_ptr<Line> cur) { data.insert(cur); };
+    void erase(shared_ptr<Line> cur);
+
+    int size() const { return data.size(); };
+    bool empty() const { return data.empty(); };
+
+    shared_ptr<Line> getPred(shared_ptr<Line> cur) const;
+    shared_ptr<Line> getSucc(shared_ptr<Line> cur) const;
+
+private:
+    set<shared_ptr<Line>, sweep_comp> data;
+};
+
+void event_queue::readLines(istream& instream) {
     int n;
     instream >> n;
-
-    event_queue events;
 
     for (int i = 0; i < n; i++) {
         Point a, b;
@@ -86,11 +112,36 @@ event_queue readLines(istream& instream) {
         temp->left.type = PTYPE::left;
         temp->right.type = PTYPE::right;
 
-        events.push(make_pair(temp->left, temp));
-        events.push(make_pair(temp->right, temp));
+        push(make_pair(temp->left, temp));
+        push(make_pair(temp->right, temp));
     }
+}
 
-    return events;
+void event_queue::erase(pair<Point, shared_ptr<Line>> cur) {
+    auto it = data.find(cur);
+    data.erase(it);
+}
+
+void sweep_status::erase(shared_ptr<Line> cur) {
+    auto it = data.find(cur);
+    data.erase(it);
+}
+
+shared_ptr<Line> sweep_status::getPred(shared_ptr<Line> cur) const {
+    auto it = data.find(cur);
+    if (it == data.begin())
+        return nullptr;
+    else
+        return *(--it);
+}
+
+shared_ptr<Line> sweep_status::getSucc(shared_ptr<Line> cur) const {
+    auto it = data.find(cur);
+    it++;
+    if (it != data.end())
+        return *it;
+    else
+        return nullptr;
 }
 
 void logInput(ostream& ofs, const event_queue& events) {
@@ -103,11 +154,11 @@ void logInput(ostream& ofs, const event_queue& events) {
     }
 }
 
-void logStatus(ostream& ofs, const sweep_status& sweepline) {
-    ofs << "Sweep Status Log" << endl;
-    ofs << sweepline.size() << endl;
-    for (auto i: sweepline) { ofs << *i << ' ' << i->cury << endl; }
-}
+// void logStatus(ostream& ofs, const sweep_status& sweepline) {
+//     ofs << "Sweep Status Log" << endl;
+//     ofs << sweepline.size() << endl;
+//     for (auto i: sweepline) { ofs << *i << ' ' << i->cury << endl; }
+// }
 
 double cross(const Point& a, const Point& b) {
     return a.x * b.y - b.x * a.y;
@@ -154,26 +205,9 @@ void processEvent(shared_ptr<Line> fir, shared_ptr<Line> sec, event_queue& event
     }
 }
 
-shared_ptr<Line> getPred(shared_ptr<Line> cur, const sweep_status& sweepline) {
-    auto it = sweepline.find(cur);
-    if (it == sweepline.begin())
-        return nullptr;
-    else
-        return *(--it);
-}
-
-shared_ptr<Line> getSucc(shared_ptr<Line> cur, const sweep_status& sweepline) {
-    auto it = sweepline.find(cur);
-    it++;
-    if (it != sweepline.end())
-        return *it;
-    else
-        return nullptr;
-}
-
 void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
-    shared_ptr<Line> prev = getPred(cur, sweepline);
-    shared_ptr<Line> succ = getSucc(cur, sweepline);
+    shared_ptr<Line> prev = sweepline.getPred(cur);
+    shared_ptr<Line> succ = sweepline.getSucc(cur);
     if (prev != nullptr && succ != nullptr) {
         // cur in the middle
         processEvent(prev, cur, events);
@@ -188,8 +222,8 @@ void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline, even
 }
 
 void processRightEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
-    shared_ptr<Line> prev = getPred(cur, sweepline);
-    shared_ptr<Line> succ = getSucc(cur, sweepline);
+    shared_ptr<Line> prev = sweepline.getPred(cur);
+    shared_ptr<Line> succ = sweepline.getSucc(cur);
 
     if (prev != nullptr && succ != nullptr) {
         // cur in the middle
@@ -199,9 +233,9 @@ void processRightEvents(shared_ptr<Line> cur, const sweep_status& sweepline, eve
 
 void processInterEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
     shared_ptr<Line> top = cur;
-    shared_ptr<Line> below = getSucc(top, sweepline);
-    shared_ptr<Line> topplus = getPred(top, sweepline);
-    shared_ptr<Line> belowminus = getSucc(below, sweepline);
+    shared_ptr<Line> below = sweepline.getSucc(top);
+    shared_ptr<Line> topplus = sweepline.getPred(top);
+    shared_ptr<Line> belowminus = sweepline.getSucc(below);
 
     if (below != nullptr && topplus != nullptr) { processEvent(topplus, below, events); }
     if (top != nullptr && belowminus != nullptr) { processEvent(top, belowminus, events); }
@@ -211,18 +245,19 @@ int main() {
     ifstream ifs;
     ofstream ofs;
 
-    // event queue to get points stl priority-queue based on heap
+    // event queue to get points
     event_queue events;
-    ifs.open("testLines/1/input.txt");
-    events = readLines(ifs);
+
+    // sweep status in an ordered dictionary or stl set based on balanced tree
+    sweep_status sweepline;
+
+    ifs.open("testLines/2/input.txt");
+    events.readLines(ifs);
     ifs.close();
 
     ofs.open("out.txt", ios_base::out);
     logInput(ofs, events);
     ofs.close();
-
-    // sweep status in an ordered dictionary or stl set based on balanced tree
-    sweep_status sweepline;
 
     vector<Point> ans;
 
@@ -230,36 +265,32 @@ int main() {
         shared_ptr<Line> cur = events.top().second;
         if (events.top().first.type == PTYPE::left) {
             cur->cury = cur->left.y;
-            sweepline.insert(cur);
+            sweepline.push(cur);
             processLeftEvents(cur, sweepline, events);
         } else if (events.top().first.type == PTYPE::right) {
             processRightEvents(cur, sweepline, events);
-            auto it = sweepline.find(cur);
-            if (events.size() == 6) {
-                cout << *sweepline.begin() << endl;
-                cout << cur << endl;
-                auto it = sweepline.find(cur);
-                cout << *it << endl;
-                cout << "OK" << endl;
-            }
-            sweepline.erase(it);
+            sweepline.erase(cur);
         } else if (events.top().first.type == PTYPE::intersection) {
             // the intersection is always for the top line, so it is exchanged with line below
             // this below line will be the successor
             ans.push_back(events.top().first);
             processInterEvents(cur, sweepline, events);
             shared_ptr<Line> top = cur;
-            shared_ptr<Line> bottom = getSucc(top, sweepline);
+            shared_ptr<Line> bottom = sweepline.getSucc(top);
+            sweepline.erase(top);
+            sweepline.erase(bottom);
             swap(bottom->cury, top->cury);
+            sweepline.push(top);
+            sweepline.push(bottom);
         }
         events.pop();
     }
 
     cout << ans.size() << endl;
-    for (auto i: ans) cout << i << ' ';
+    for (auto i: ans) cout << i << endl;
     cout << endl;
 
-    ofs.open("out.txt", ios_base::app);
-    logStatus(ofs, sweepline);
-    ofs.close();
+    // ofs.open("out.txt", ios_base::app);
+    // logStatus(ofs, sweepline);
+    // ofs.close();
 }
