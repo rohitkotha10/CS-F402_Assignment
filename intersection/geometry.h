@@ -17,6 +17,26 @@ struct Point {
     PTYPE type;
 };
 
+struct Line {
+    Line() {};
+    Line(Point a, Point b) : left {a}, right {b} {};
+    Point left, right;
+    double evaly(double val) const;
+};
+
+struct InterPoint: Point {
+    InterPoint() : Point() {};
+    InterPoint(double x, double y) : Point(x, y, PTYPE::intersection) {};
+};
+
+double Line::evaly(double val) const {
+    double ans;
+    double m1, c1;
+    m1 = (right.y - left.y) / (right.x - left.x);
+    c1 = right.y - m1 * (right.x);
+    return m1 * val + c1;
+}
+
 ostream& operator<<(ostream& os, const Point& a) {
     os << '(' << a.x << ',' << a.y << ')';
     return os;
@@ -35,6 +55,51 @@ Point operator-(const Point& a, const Point& b) {
     return Point(a.x - b.x, a.y - b.y);
 }
 
+bool operator<(const Point& a, const Point& b) {
+    return a.x < b.x || (a.x == b.x && a.y < b.y);
+}
+
+bool operator==(const Point& a, const Point& b) {
+    return a.x == b.x && a.y == b.y;
+}
+
+bool operator>(const Point& a, const Point& b) {
+    return b < a;
+}
+
+ostream& operator<<(ostream& os, const Line& a) {
+    os << '{' << a.left << ',' << a.right << '}';
+    return os;
+}
+
+istream& operator>>(istream& is, Line& cur) {
+    Point a, b;
+    is >> a >> b;
+    if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
+        cur.left = a;
+        cur.right = b;
+    } else {
+        cur.left = b;
+        cur.right = a;
+    };
+    cur.left.type = PTYPE::left;
+    cur.right.type = PTYPE::right;
+
+    return is;
+}
+
+bool operator<(const Line& a, const Line& b) {
+    return a.evaly(sweep_x) < b.evaly(sweep_x);
+}
+
+bool operator==(const Line& a, const Line& b) {
+    return a.evaly(sweep_x) == b.evaly(sweep_x);
+}
+
+bool operator>(const Line& a, const Line& b) {
+    return b < a;
+}
+
 double cross(const Point& a, const Point& b) {
     return a.x * b.y - b.x * a.y;
 }
@@ -48,31 +113,6 @@ int orientation(const Point& a, const Point& b, const Point& c) {
         return 0;
     else
         return -1;
-}
-
-struct Line {
-    Line() {};
-    Line(Point a, Point b) : left {a}, right {b} {};
-    Point left, right;
-    double evaly(double val);
-};
-
-double Line::evaly(double val) {
-    double ans;
-    double m1, c1;
-    m1 = (right.y - left.y) / (right.x - left.x);
-    c1 = right.y - m1 * (right.x);
-    return m1 * val + c1;
-}
-
-ostream& operator<<(ostream& os, const Line& a) {
-    os << '{' << a.left << ',' << a.right << '}';
-    return os;
-}
-
-istream& operator>>(istream& is, Line& a) {
-    is >> a.left >> a.right;
-    return is;
 }
 
 bool checkIntersection(const Line& a, const Line& b) {

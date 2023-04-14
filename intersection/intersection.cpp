@@ -3,8 +3,6 @@
 
 #include <iostream>
 #include <fstream>
-#include <memory>
-#include <set>
 
 using namespace std;
 
@@ -20,16 +18,17 @@ int main() {
     // sweep status in an ordered dictionary or stl set based on balanced tree
     sweep_status sweepline;
 
-    ifs.open("testLines/1/input.txt");
+    ifs.open("testLines/2/input.txt");
     events.readLines(ifs);
     ifs.close();
 
     ofs.open("out.txt", ios_base::out);
-    logInput(ofs, events);
+    ofs << "Event Queue" << endl;
+    ofs << events;
     ofs.close();
 
     while (!events.empty()) {
-        shared_ptr<Line> cur = events.top().second;
+        Line cur = events.top().second;
         sweep_x = events.top().first.x;
         if (events.top().first.type == PTYPE::left) {
             sweepline.push(cur);
@@ -38,16 +37,20 @@ int main() {
             processRightEvents(cur, sweepline, events);
             sweepline.erase(cur);
         } else if (events.top().first.type == PTYPE::intersection) {
-            // the intersection is always for the top line, so it is exchanged with line below
-            // this below line will be the successor
+            cout << events.top().first << endl;
             processInterEvents(cur, sweepline, events);
-            shared_ptr<Line> top = cur;
-            shared_ptr<Line> bottom = sweepline.getSucc(top);
+            Line other = getMatchingInter(cur, sweepline);
+            sweepline.erase(cur);
+            sweepline.erase(other);
+            sweepline.push(cur);
+            sweepline.push(other);
         }
 
         ofs.open("status.txt", ios_base::out);
-        logStatus(ofs, sweepline);
+        ofs << "Sweep Status" << endl;
+        ofs << sweepline;
         ofs.close();
+
         events.pop();
     }
 }
