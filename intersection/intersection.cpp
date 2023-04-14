@@ -153,42 +153,58 @@ void processEvent(shared_ptr<Line> fir, shared_ptr<Line> sec, event_queue& event
     }
 }
 
-void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
+shared_ptr<Line> getPred(shared_ptr<Line> cur, const sweep_status& sweepline) {
     auto it = sweepline.find(cur);
-    auto prev = it;
-    if (it != sweepline.begin()) prev--;
-    auto succ = it;
-    succ++;
-    int pos = 0;      // end or mid
-    int hasPrev = 0;  //
-    if (it != sweepline.begin()) pos++, hasPrev = 1;
-    if (succ != sweepline.end()) pos++, hasPrev = 0;
+    if (it == sweepline.begin())
+        return nullptr;
+    else
+        return *(--it);
+}
 
-    if (pos == 2) {
+shared_ptr<Line> getSucc(shared_ptr<Line> cur, const sweep_status& sweepline) {
+    auto it = sweepline.find(cur);
+    it++;
+    if (it != sweepline.end())
+        return *it;
+    else
+        return nullptr;
+}
+
+void processLeftEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
+    shared_ptr<Line> prev = getPred(cur, sweepline);
+    shared_ptr<Line> succ = getSucc(cur, sweepline);
+
+    if (prev != nullptr && succ != nullptr) {
         // cur in the middle
-        processEvent(*prev, *it, events);
-        processEvent(*it, *succ, events);
-    } else if (pos == 1 && hasPrev == 1) {
+        processEvent(prev, cur, events);
+        processEvent(cur, succ, events);
+    } else if (prev != nullptr) {
         // is in the bottom
-        processEvent(*prev, *it, events);
-    } else if (pos == 1 && hasPrev == 0) {
+        processEvent(prev, cur, events);
+    } else if (succ != nullptr) {
         // is in the top
-        processEvent(*it, *succ, events);
+        processEvent(cur, succ, events);
     }
-
-    // ofstream ofs;
-    // ofs.open("out.txt", ios_base::app);
-    // ofs << "CUR " << **it << endl;
-    // if (it != sweepline.begin()) ofs << "PREV " << **prev << endl;
-    // if (succ != sweepline.end()) ofs << "SUCC " << **succ << endl;
-    // ofs << endl;
-    // ofs.close();
 }
 
 void processRightEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
+    shared_ptr<Line> prev = getPred(cur, sweepline);
+    shared_ptr<Line> succ = getSucc(cur, sweepline);
+
+    if (prev != nullptr && succ != nullptr) {
+        // cur in the middle
+        processEvent(prev, succ, events);
+    }
 }
 
 void processInterEvents(shared_ptr<Line> cur, const sweep_status& sweepline, event_queue& events) {
+    shared_ptr<Line> top = cur;
+    shared_ptr<Line> below = getSucc(top, sweepline);
+    shared_ptr<Line> topplus = getPred(top, sweepline);
+    shared_ptr<Line> belowminus = getSucc(below, sweepline);
+
+    if (below != nullptr && topplus != nullptr) { processEvent(topplus, below, events); }
+    if (top != nullptr && belowminus != nullptr) { processEvent(top, belowminus, events); }
 }
 
 int main() {
@@ -208,6 +224,8 @@ int main() {
     // sweep status in an ordered dictionary or stl set based on balanced tree
     sweep_status sweepline;
 
+    vector<Point> ans;
+
     while (!events.empty()) {
         shared_ptr<Line> cur = events.top().second;
         if (events.top().first.type == PTYPE::left) {
@@ -221,11 +239,18 @@ int main() {
         } else if (events.top().first.type == PTYPE::intersection) {
             // the intersection is always for the top line, so it is exchanged with line below
             // this below line will be the successor
-            cout << events.top().first << endl;
+            ans.push_back(events.top().first);
             processInterEvents(cur, sweepline, events);
+            shared_ptr<Line> top = cur;
+            shared_ptr<Line> bottom = getSucc(top, sweepline);
+            swap(bottom->cury, top->cury);
         }
         events.pop();
     }
+
+    cout << ans.size() << endl;
+    for (auto i: ans) cout << i << ' ';
+    cout << endl;
 
     ofs.open("out.txt", ios_base::app);
     logStatus(ofs, sweepline);
