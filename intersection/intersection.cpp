@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 
 using namespace std;
 
@@ -18,12 +19,14 @@ int main() {
     // sweep status in an ordered dictionary or stl set based on balanced tree
     sweep_status sweepline;
 
-    ifs.open("testLines/2/input.txt");
+    ifs.open("testLines/1/input.txt");
     events.readLines(ifs);
     ifs.close();
 
     int afterInter = 0;
     Line inter1, inter2;
+
+    vector<Point> ans;
 
     while (!events.empty()) {
         Line cur = events.top().second;
@@ -41,7 +44,7 @@ int main() {
             processRightEvents(cur, sweepline, events);
             sweepline.erase(cur);
         } else if (events.top().first.type == PTYPE::intersection) {
-            cout << events.top().first << endl;
+            ans.push_back(events.top().first);
             processInterEvents(cur, sweepline, events);
             Line other = getMatchingInter(cur, sweepline);
             afterInter = 1;
@@ -62,4 +65,7 @@ int main() {
         ofs << sweepline;
         ofs.close();
     }
+
+    cout << ans.size() << endl;
+    for (auto i : ans) cout << i << endl;
 }

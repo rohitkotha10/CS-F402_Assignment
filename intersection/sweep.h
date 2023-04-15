@@ -107,9 +107,8 @@ ostream& operator<<(ostream& ofs, const sweep_status& sweepline) {
 }
 
 void processEvent(Line fir, Line sec, event_queue& events) {
-    // fir is always top of sec int sweep line status
-    // so that the intersection association of point is with top line
-    double minx = events.top().first.x;
+    // fir is below line i.e least y before intersection
+    double minx = sweep_x;
     if (checkIntersection(fir, sec)) {
         Point ans = intersect(fir, sec);
         if (ans.x > minx) events.push(make_pair(ans, fir));
@@ -121,12 +120,12 @@ void processLeftEvents(Line cur, const sweep_status& sweepline, event_queue& eve
         // cur in the middle
         processEvent(sweepline.getPred(cur), cur, events);
         processEvent(cur, sweepline.getSucc(cur), events);
-    } else if (sweepline.existPred(cur)) {
-        // is in the bottom
-        processEvent(sweepline.getPred(cur), cur, events);
     } else if (sweepline.existSucc(cur)) {
-        // is in the top
+        // is in the bottom
         processEvent(cur, sweepline.getSucc(cur), events);
+    } else if (sweepline.existPred(cur)) {
+        // is in the top
+        processEvent(sweepline.getPred(cur), cur, events);
     }
 }
 
@@ -138,7 +137,6 @@ void processRightEvents(Line cur, const sweep_status& sweepline, event_queue& ev
 }
 
 Line getMatchingInter(Line cur, const sweep_status& sweepline) {
-    auto it = sweepline.data.find(cur);
     Line potential;
     if (sweepline.existSucc(cur)) {
         potential = sweepline.getSucc(cur);
@@ -155,11 +153,15 @@ Line getMatchingInter(Line cur, const sweep_status& sweepline) {
 }
 
 void processInterEvents(Line cur, const sweep_status& sweepline, event_queue& events) {
-    // Line top = cur;
-    // Line below = sweepline.getSucc(top);
-    // Line topplus = sweepline.getPred(top);
-    // Line belowminus = sweepline.getSucc(below);
+    Line below, top;
+    if (sweepline.existSucc(cur)) {
+        below = cur;
+        top = sweepline.getSucc(cur);
+    } else if (sweepline.existPred(cur)) {
+        below = sweepline.getPred(cur);
+        top = cur;
+    }
 
-    // if (below != nullptr && topplus != nullptr) { processEvent(topplus, below, events); }
-    // if (top != nullptr && belowminus != nullptr) { processEvent(top, belowminus, events); }
+    if (sweepline.existSucc(top)) { processEvent(below, sweepline.getSucc(top), events); }
+    if (sweepline.existPred(below)) { processEvent(sweepline.getPred(below), top, events); }
 }
