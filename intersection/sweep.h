@@ -6,6 +6,7 @@
 #include <utility>
 #include <map>
 #include <set>
+#include <vector>
 
 using namespace std;
 
@@ -13,7 +14,7 @@ extern double sweep_x;
 
 class event_queue {
 public:
-    void readLines(istream& ifs);
+    void processLines(const vector<Line>& arr);
 
     void push(pair<Point, Line> cur) { data.insert(cur); };
     void erase(pair<Point, Line> cur);
@@ -23,7 +24,7 @@ public:
     int size() const { return data.size(); };
     bool empty() const { return data.empty(); };
 
-    map<Point, Line> data;
+    multimap<Point, Line> data;
 };
 
 class sweep_status {
@@ -42,22 +43,25 @@ public:
     multiset<Line> data;
 };
 
-void event_queue::readLines(istream& instream) {
-    int n;
-    instream >> n;
-
-    for (int i = 0; i < n; i++) {
-        Line temp;
-        instream >> temp;
-
-        this->push(make_pair(temp.left, temp));
-        this->push(make_pair(temp.right, temp));
+void event_queue::processLines(const vector<Line>& arr) {
+    if (arr.size() == 0) return;
+    for (int i = 0; i < arr.size(); i++) {
+        this->push(make_pair(arr[i].left, arr[i]));
+        this->push(make_pair(arr[i].right, arr[i]));
     }
 }
 
 void event_queue::erase(pair<Point, Line> cur) {
-    auto it = data.find(cur.first);
-    data.erase(it);
+    typedef multimap<Point, Line>::iterator iterator;
+    pair<iterator, iterator> iterpair = data.equal_range(cur.first);
+
+    iterator it = iterpair.first;
+    for (; it != iterpair.second;) {
+        if (it->second == cur.second) {
+            it = data.erase(it);
+        } else
+            it++;
+    }
 }
 
 void sweep_status::erase(Line cur) {
@@ -106,18 +110,34 @@ ostream& operator<<(ostream& ofs, const sweep_status& sweepline) {
     return ofs;
 }
 
+vector<Line> readInput(istream& instream) {
+    int n;
+    instream >> n;
+    vector<Line> ans(n);
+    for (int i = 0; i < n; i++) { instream >> ans[i]; }
+    return ans;
+}
+
 void processEvent(Line fir, Line sec, event_queue& events) {
     // fir is below line i.e least y before intersection
-    double minx = sweep_x;
     if (checkIntersection(fir, sec)) {
         Point ans = intersect(fir, sec);
-        if (ans.x > minx) events.push(make_pair(ans, fir));
+        if (compare(ans.x, sweep_x) == 1) events.push(make_pair(ans, fir));
+    }
+}
+
+void removeEvent(Line fir, Line sec, event_queue& events) {
+    // fir is below line i.e least y before intersection
+    if (checkIntersection(fir, sec)) {
+        Point ans = intersect(fir, sec);
+        if (compare(ans.x, sweep_x) == 1) { events.erase(make_pair(ans, fir)); }
     }
 }
 
 void processLeftEvents(Line cur, const sweep_status& sweepline, event_queue& events) {
     if (sweepline.existPred(cur) && sweepline.existSucc(cur)) {
         // cur in the middle
+        removeEvent(sweepline.getPred(cur), sweepline.getSucc(cur), events);
         processEvent(sweepline.getPred(cur), cur, events);
         processEvent(cur, sweepline.getSucc(cur), events);
     } else if (sweepline.existSucc(cur)) {
@@ -146,6 +166,13 @@ void processInterEvents(Line cur, const sweep_status& sweepline, event_queue& ev
         top = cur;
     }
 
-    if (sweepline.existSucc(top)) { processEvent(below, sweepline.getSucc(top), events); }
-    if (sweepline.existPred(below)) { processEvent(sweepline.getPred(below), top, events); }
+    if (sweepline.existSucc(top)) {
+        removeEvent(top, sweepline.getSucc(top), events);
+        processEvent(below, sweepline.getSucc(top), events);
+    }
+
+    if (sweepline.existPred(below)) {
+        removeEvent(sweepline.getPred(below), below, events);
+        processEvent(sweepline.getPred(below), top, events);
+    }
 }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <set>
 
 using namespace std;
 
@@ -13,23 +14,29 @@ int main(int argc, char** argv) {
     ifstream ifs;
     ofstream ofs;
 
+    // final answer containing intersections
+    vector<Point> ans;
+
     // event queue stored in a map
     event_queue events;
 
     // sweep status stored in stl set based on balanced tree
     sweep_status sweepline;
 
+    // handle degenrates before passing to event queue
+    vector<Line> prearr;
+
     if (argc == 2) {
         ifs.open(argv[1]);
-        events.readLines(ifs);
+        prearr = readInput(ifs);
         ifs.close();
     } else
-        events.readLines(cin);
+        prearr = readInput(cin);
+
+    events.processLines(prearr);
 
     int afterInter = 0;
     Line inter1, inter2;
-
-    vector<Point> ans;
 
     while (!events.empty()) {
         Line cur = events.top().second;

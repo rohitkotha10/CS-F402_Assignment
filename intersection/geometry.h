@@ -10,6 +10,15 @@ using namespace std;
 
 extern double sweep_x;
 
+int compare(const double& a, const double& b) {
+    if (fabs(a - b) < PREC)
+        return 0;
+    else if (a < b)
+        return -1;
+    else
+        return 1;
+}
+
 enum class PTYPE { left, right, intersection };
 
 struct Point {
@@ -24,15 +33,21 @@ struct Point {
 struct Line {
     Line() {};
     Line(Point a, Point b) : left {a}, right {b} {
-        m = (a.y - b.y) / (a.x - b.x);
-        c = a.y - m * a.x;
+        if (compare(a.x, b.x) == 0) {
+            isVertical = true;
+            k = a.x;
+        } else {
+            isVertical = false;
+            m = (a.y - b.y) / (a.x - b.x);
+            c = a.y - m * a.x;
+        }
     };
 
-    double evaly(double val) const {
-        return m * val + c;
-    };
+    double evaly(double val) const { return m * val + c; };
 
     Point left, right;
+    bool isVertical;
+    double k;     // x = k if vertical
     double m, c;  // y = mx + c;
 };
 
@@ -55,11 +70,11 @@ Point operator-(const Point& a, const Point& b) {
 }
 
 bool operator<(const Point& a, const Point& b) {
-    return a.x < b.x || (a.x == b.x && a.y < b.y);
+    return (compare(a.x, b.x) == -1 || (compare(a.x, b.x) == 0 && compare(a.y, b.y) == -1));
 }
 
 bool operator==(const Point& a, const Point& b) {
-    return a.x == b.x && a.y == b.y;
+    return compare(a.x, b.x) == 0 && compare(a.x, b.x) == 0;
 }
 
 bool operator>(const Point& a, const Point& b) {
@@ -73,9 +88,9 @@ double cross(const Point& a, const Point& b) {
 // 1 anticlockwise, 0 collinear, -1 clockwise
 int orientation(const Point& a, const Point& b, const Point& c) {
     double cr = cross(b - a, c - b);
-    if (cr > 0)
+    if (compare(cr, 0) == 1)
         return 1;
-    else if (cr == 0)
+    else if (compare(cr, 0) == 0)
         return 0;
     else
         return -1;
@@ -89,11 +104,11 @@ ostream& operator<<(ostream& os, const Line& a) {
 istream& operator>>(istream& is, Line& cur) {
     Point a, b;
     is >> a >> b;
-    if (a.x < b.x || (a.x == b.x && a.y < b.y)) {
+    if (compare(a.x, b.x) == -1 || (compare(a.x, b.x) == 0 && compare(a.x, b.x) == -1)) {
         cur = Line(a, b);
     } else {
         cur = Line(b, a);
-    };
+    }
     cur.left.type = PTYPE::left;
     cur.right.type = PTYPE::right;
 
@@ -101,8 +116,8 @@ istream& operator>>(istream& is, Line& cur) {
 }
 
 bool operator<(const Line& a, const Line& b) {
-    return fabs(a.evaly(sweep_x) - b.evaly(sweep_x)) > PREC && a.evaly(sweep_x) < b.evaly(sweep_x) ||
-           (fabs(a.evaly(sweep_x) - b.evaly(sweep_x)) <= PREC && orientation(a.left, b.left, a.right) < 0);
+    return compare(a.evaly(sweep_x), b.evaly(sweep_x)) == -1 ||
+           (compare(a.evaly(sweep_x), b.evaly(sweep_x)) == 0 && orientation(a.left, b.left, a.right) < 0);
 }
 
 bool operator==(const Line& a, const Line& b) {
@@ -113,6 +128,13 @@ bool operator>(const Line& a, const Line& b) {
     return b < a;
 }
 
+// one line is part of another with different endpoints
+bool checkSameLine(const Line& a, const Line& b) {
+    if (a.isVertical && b.isVertical) { return compare(a.k, b.k) == 0; }
+    return (compare(a.m, b.m) == 0 && compare(a.c, b.c) == 0);
+}
+
+// must be two different lines and non vertical
 bool checkIntersection(const Line& a, const Line& b) {
     if (orientation(a.left, b.left, a.right) == orientation(a.left, b.right, a.right)) return false;
     if (orientation(b.left, a.left, b.right) == orientation(b.left, a.right, b.right)) return false;
