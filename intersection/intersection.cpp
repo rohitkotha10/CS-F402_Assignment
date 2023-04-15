@@ -22,11 +22,6 @@ int main() {
     events.readLines(ifs);
     ifs.close();
 
-    ofs.open("out.txt", ios_base::out);
-    ofs << "Event Queue" << endl;
-    ofs << events;
-    ofs.close();
-
     while (!events.empty()) {
         Line cur = events.top().second;
         sweep_x = events.top().first.x;
@@ -39,19 +34,23 @@ int main() {
         } else if (events.top().first.type == PTYPE::intersection) {
             cout << events.top().first << endl;
             processInterEvents(cur, sweepline, events);
-            getMatchingInter(cur, sweepline);
-            
-            // sweepline.erase(cur);
-            // sweepline.erase(other);
-            // sweepline.push(cur);
-            // sweepline.push(other);
-        }
+            Line other = getMatchingInter(cur, sweepline);
 
-        ofs.open("status.txt", ios_base::out);
+            sweepline.erase(cur);
+            sweepline.erase(other);
+            sweepline.push(other);
+            sweepline.push(cur);
+        }
+        events.pop();
+
+        ofs.open("event.txt", ios_base::out);
+        ofs << "Event Queue" << endl;
+        ofs << events;
+        ofs.close();
+
+        ofs.open("sweep.txt", ios_base::out);
         ofs << "Sweep Status" << endl;
         ofs << sweepline;
         ofs.close();
-
-        events.pop();
     }
 }
