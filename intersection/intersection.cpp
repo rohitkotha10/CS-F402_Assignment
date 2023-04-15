@@ -22,9 +22,18 @@ int main() {
     events.readLines(ifs);
     ifs.close();
 
+    int afterInter = 0;
+    Line inter1, inter2;
+
     while (!events.empty()) {
         Line cur = events.top().second;
         sweep_x = events.top().first.x;
+
+        if (afterInter == 1) {
+            sweepline.push(inter1);
+            sweepline.push(inter2);
+            afterInter = 0;
+        }
         if (events.top().first.type == PTYPE::left) {
             sweepline.push(cur);
             processLeftEvents(cur, sweepline, events);
@@ -35,11 +44,11 @@ int main() {
             cout << events.top().first << endl;
             processInterEvents(cur, sweepline, events);
             Line other = getMatchingInter(cur, sweepline);
-
+            afterInter = 1;
+            inter1 = cur;
+            inter2 = other;
             sweepline.erase(cur);
             sweepline.erase(other);
-            sweepline.push(other);
-            sweepline.push(cur);
         }
         events.pop();
 

@@ -143,22 +143,12 @@ Line getMatchingInter(Line cur, const sweep_status& sweepline) {
     if (sweepline.existSucc(cur)) {
         potential = sweepline.getSucc(cur);
         int comp = fabs(potential.evaly(sweep_x) - cur.evaly(sweep_x)) <= PREC;
-        if (comp == 1) {
-            Line fin;
-            fin.left = potential.left;
-            fin.right = potential.right;
-            return fin;
-        };
+        if (comp == 1) { return potential; };
     }
     if (sweepline.existPred(cur)) {
         potential = sweepline.getPred(cur);
         int comp = fabs(potential.evaly(sweep_x) - cur.evaly(sweep_x)) <= PREC;
-        if (comp == 1) {
-            Line fin;
-            fin.left = potential.left;
-            fin.right = potential.right;
-            return fin;
-        };
+        if (comp == 1) { return potential; };
     }
 
     return Line();
