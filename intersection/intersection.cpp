@@ -9,19 +9,22 @@ using namespace std;
 
 double sweep_x;
 
-int main() {
+int main(int argc, char** argv) {
     ifstream ifs;
     ofstream ofs;
 
-    // event queue to get points
+    // event queue stored in a map
     event_queue events;
 
-    // sweep status in an ordered dictionary or stl set based on balanced tree
+    // sweep status stored in stl set based on balanced tree
     sweep_status sweepline;
 
-    ifs.open("testLines/1/input.txt");
-    events.readLines(ifs);
-    ifs.close();
+    if (argc == 2) {
+        ifs.open(argv[1]);
+        events.readLines(ifs);
+        ifs.close();
+    } else
+        events.readLines(cin);
 
     int afterInter = 0;
     Line inter1, inter2;
@@ -46,7 +49,7 @@ int main() {
         } else if (events.top().first.type == PTYPE::intersection) {
             ans.push_back(events.top().first);
             processInterEvents(cur, sweepline, events);
-            Line other = getMatchingInter(cur, sweepline);
+            Line other = sweepline.getSucc(cur);
             afterInter = 1;
             inter1 = cur;
             inter2 = other;
@@ -67,5 +70,5 @@ int main() {
     }
 
     cout << ans.size() << endl;
-    for (auto i : ans) cout << i << endl;
+    for (auto i: ans) cout << i << endl;
 }

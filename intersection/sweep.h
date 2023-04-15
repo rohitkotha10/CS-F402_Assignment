@@ -136,22 +136,6 @@ void processRightEvents(Line cur, const sweep_status& sweepline, event_queue& ev
     }
 }
 
-Line getMatchingInter(Line cur, const sweep_status& sweepline) {
-    Line potential;
-    if (sweepline.existSucc(cur)) {
-        potential = sweepline.getSucc(cur);
-        int comp = fabs(potential.evaly(sweep_x) - cur.evaly(sweep_x)) <= PREC;
-        if (comp == 1) { return potential; };
-    }
-    if (sweepline.existPred(cur)) {
-        potential = sweepline.getPred(cur);
-        int comp = fabs(potential.evaly(sweep_x) - cur.evaly(sweep_x)) <= PREC;
-        if (comp == 1) { return potential; };
-    }
-
-    return Line();
-}
-
 void processInterEvents(Line cur, const sweep_status& sweepline, event_queue& events) {
     Line below, top;
     if (sweepline.existSucc(cur)) {
