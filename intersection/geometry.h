@@ -2,8 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <utility>
+#include <cmath>
 
 using namespace std;
+
+#define PREC 0.000001
 
 extern double sweep_x;
 
@@ -89,11 +92,12 @@ istream& operator>>(istream& is, Line& cur) {
 }
 
 bool operator<(const Line& a, const Line& b) {
-    return a.evaly(sweep_x) < b.evaly(sweep_x);
+    return fabs(a.evaly(sweep_x) - b.evaly(sweep_x)) > PREC && a.evaly(sweep_x) < b.evaly(sweep_x) ||
+           (fabs(a.evaly(sweep_x) - b.evaly(sweep_x)) <= PREC && a.left.x < b.left.x);
 }
 
 bool operator==(const Line& a, const Line& b) {
-    return a.evaly(sweep_x) == b.evaly(sweep_x);
+    return a.left == b.left && a.right == b.right;
 }
 
 bool operator>(const Line& a, const Line& b) {

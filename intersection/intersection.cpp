@@ -39,11 +39,12 @@ int main() {
         } else if (events.top().first.type == PTYPE::intersection) {
             cout << events.top().first << endl;
             processInterEvents(cur, sweepline, events);
-            Line other = getMatchingInter(cur, sweepline);
-            sweepline.erase(cur);
-            sweepline.erase(other);
-            sweepline.push(cur);
-            sweepline.push(other);
+            getMatchingInter(cur, sweepline);
+            
+            // sweepline.erase(cur);
+            // sweepline.erase(other);
+            // sweepline.push(cur);
+            // sweepline.push(other);
         }
 
         ofs.open("status.txt", ios_base::out);

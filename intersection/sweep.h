@@ -67,7 +67,7 @@ void sweep_status::erase(Line cur) {
 
 bool sweep_status::existPred(Line cur) const {
     auto it = data.find(cur);
-    if (it == data.begin() || it == data.end())
+    if (it == data.begin())
         return false;
     else
         return true;
@@ -81,6 +81,7 @@ Line sweep_status::getPred(Line cur) const {
 
 bool sweep_status::existSucc(Line cur) const {
     auto it = data.find(cur);
+    it++;
     if (it == data.end())
         return false;
     else
@@ -137,17 +138,28 @@ void processRightEvents(Line cur, const sweep_status& sweepline, event_queue& ev
 }
 
 Line getMatchingInter(Line cur, const sweep_status& sweepline) {
+    auto it = sweepline.data.find(cur);
     Line potential;
     if (sweepline.existSucc(cur)) {
         potential = sweepline.getSucc(cur);
-        if (potential == cur) return potential;
+        int comp = fabs(potential.evaly(sweep_x) - cur.evaly(sweep_x)) <= PREC;
+        if (comp == 1) {
+            Line fin;
+            fin.left = potential.left;
+            fin.right = potential.right;
+            return fin;
+        };
     }
     if (sweepline.existPred(cur)) {
         potential = sweepline.getPred(cur);
-        if (potential == cur) return potential;
+        int comp = fabs(potential.evaly(sweep_x) - cur.evaly(sweep_x)) <= PREC;
+        if (comp == 1) {
+            Line fin;
+            fin.left = potential.left;
+            fin.right = potential.right;
+            return fin;
+        };
     }
-
-    cout << "NONE" << endl;
 
     return Line();
 }
