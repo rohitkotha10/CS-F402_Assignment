@@ -1,0 +1,71 @@
+\documentclass[11pt]{article}
+\usepackage[top=2.5cm, left=3cm, right=3cm, bottom=4.0cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{newtxtext, newtxmath}
+\usepackage{enumitem}
+\usepackage{titling}
+\usepackage[colorlinks=true]{hyperref}
+
+\setlength{\droptitle}{-6em}
+
+\title{CS-F402 Computational Geometry \\ Programming Assignment}
+\author{Kotha Rohit Reddy \\ 2020A7PS1890H}
+\date{April 24, 2023}
+
+\begin{document}
+\maketitle
+
+\section{Line Segment Intersection}
+\par The Sweep Line Algorithm was implemented as mentioned in the course.
+This only handles the non degenrate cases successfully.
+\par The test cases were generated manually using \href{https://www.geogebra.org/m/VWN3g9rE}{GeoGebra}.
+I was able to test for inputs around 5 to 15 line segments.
+\par The code runs as expected in $O((n + I)log{}n)$ time and using only $O(n)$ space.
+The timings recorded for the few inputs are given below.
+This was tested with the CPU AMD Ryzen 7 4800H on Windows 11.
+
+\begin{center}
+    \begin{tabular}{c | c | c | c }
+        No. & Line Segments & Intersections & Time  \\
+        \hline % horizontal line
+        1   & 8             & 12            & 0.04s \\
+        2   & 5             & 1             & 0.01s \\
+        3   & 5             & 7             & 0.03s \\
+        4   & 14            & 18            & 0.11s \\
+    \end{tabular}
+\end{center}
+
+\section{Map Overlay}
+\par The Map Overlay for the worst case is when the $n$ segments intersect all the other $n$ segments of other map.
+I have generated a case that forms a grid with $n$ horizontal and $n$ vertical segments.
+When passed the value of $n$ as a command line argument, it outputs the runtime and solution for the overlay.
+\par Looking at the data, we see that both time and space would be a bottleneck at bigger values of $n$.
+But we can parallelize the code which can reduce the time significantly.
+Hence, when the algorithm is implemented on multiple therads, time would not be a bottleneck but space will be.
+\par The code runs in $O((n + I)log{}n)$ time and uses $O(n^2)$ space.
+The timings recorded for the inputs are given below.
+This was tested with the CPU AMD Ryzen 7 4800H on Windows 11.
+
+\begin{center}
+    \begin{tabular}{c | c | c | c }
+        No. & $n$ & Time   \\
+        \hline % horizontal line
+        1   & 2   & 0.001s \\
+        2   & 5   & 0.002s \\
+        3   & 10  & 0.006s \\
+        4   & 20  & 0.026s \\
+        5   & 50  & 0.130s \\
+        6   & 100 & 0.521s \\
+        7   & 300 & 5.21s  \\
+    \end{tabular}
+\end{center}
+
+\newpage
+
+\section*{Appendix}
+\par The source code can also be viewed at github \href{https://github.com/rohitkotha10/CS-F402_Assignment.git}{here}
+\section*{Line Segment Intersection}
+
+\end{document}

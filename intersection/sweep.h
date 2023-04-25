@@ -1,4 +1,5 @@
 #pragma once
+
 #include "geometry.h"
 
 #include <iostream>
@@ -8,23 +9,21 @@
 #include <set>
 #include <vector>
 
-using namespace std;
-
 extern double sweep_x;
 
 class event_queue {
 public:
-    void processLines(const vector<Line>& arr);
+    void processLines(const std::vector<Line>& arr);
 
-    void push(pair<Point, Line> cur) { data.insert(cur); };
-    void erase(pair<Point, Line> cur);
-    pair<Point, Line> top() { return *(data.begin()); };
+    void push(std::pair<Point, Line> cur) { data.insert(cur); };
+    void erase(std::pair<Point, Line> cur);
+    std::pair<Point, Line> top() { return *(data.begin()); };
     void pop() { data.erase(data.begin()); };
 
     int size() const { return data.size(); };
     bool empty() const { return data.empty(); };
 
-    multimap<Point, Line> data;
+    std::multimap<Point, Line> data;
 };
 
 class sweep_status {
@@ -40,20 +39,20 @@ public:
     bool existSucc(Line cur) const;
     Line getSucc(Line cur) const;
 
-    multiset<Line> data;
+    std::multiset<Line> data;
 };
 
-void event_queue::processLines(const vector<Line>& arr) {
+void event_queue::processLines(const std::vector<Line>& arr) {
     if (arr.size() == 0) return;
     for (int i = 0; i < arr.size(); i++) {
-        this->push(make_pair(arr[i].left, arr[i]));
-        this->push(make_pair(arr[i].right, arr[i]));
+        this->push(std::make_pair(arr[i].left, arr[i]));
+        this->push(std::make_pair(arr[i].right, arr[i]));
     }
 }
 
-void event_queue::erase(pair<Point, Line> cur) {
-    typedef multimap<Point, Line>::iterator iterator;
-    pair<iterator, iterator> iterpair = data.equal_range(cur.first);
+void event_queue::erase(std::pair<Point, Line> cur) {
+    typedef std::multimap<Point, Line>::iterator iterator;
+    std::pair<iterator, iterator> iterpair = data.equal_range(cur.first);
 
     iterator it = iterpair.first;
     for (; it != iterpair.second;) {
@@ -98,22 +97,22 @@ Line sweep_status::getSucc(Line cur) const {
     return *it;
 }
 
-ostream& operator<<(ostream& ofs, const event_queue& events) {
-    ofs << events.size() << endl;
-    for (auto i: events.data) { ofs << i.first << ' ' << i.second << endl; }
+std::ostream& operator<<(std::ostream& ofs, const event_queue& events) {
+    ofs << events.size() << std::endl;
+    for (auto i: events.data) { ofs << i.first << ' ' << i.second << std::endl; }
     return ofs;
 }
 
-ostream& operator<<(ostream& ofs, const sweep_status& sweepline) {
-    ofs << sweepline.size() << endl;
-    for (auto i: sweepline.data) { ofs << i << ' ' << i.evaly(sweep_x) << endl; }
+std::ostream& operator<<(std::ostream& ofs, const sweep_status& sweepline) {
+    ofs << sweepline.size() << std::endl;
+    for (auto i: sweepline.data) { ofs << i << ' ' << i.evaly(sweep_x) << std::endl; }
     return ofs;
 }
 
-vector<Line> readInput(istream& instream) {
+std::vector<Line> readInput(std::istream& instream) {
     int n;
     instream >> n;
-    vector<Line> ans(n);
+    std::vector<Line> ans(n);
     for (int i = 0; i < n; i++) { instream >> ans[i]; }
     return ans;
 }
@@ -122,7 +121,7 @@ void processEvent(Line fir, Line sec, event_queue& events) {
     // fir is below line i.e least y before intersection
     if (checkIntersection(fir, sec)) {
         Point ans = intersect(fir, sec);
-        if (compare(ans.x, sweep_x) == 1) events.push(make_pair(ans, fir));
+        if (compare(ans.x, sweep_x) == 1) events.push(std::make_pair(ans, fir));
     }
 }
 
@@ -130,7 +129,7 @@ void removeEvent(Line fir, Line sec, event_queue& events) {
     // fir is below line i.e least y before intersection
     if (checkIntersection(fir, sec)) {
         Point ans = intersect(fir, sec);
-        if (compare(ans.x, sweep_x) == 1) { events.erase(make_pair(ans, fir)); }
+        if (compare(ans.x, sweep_x) == 1) { events.erase(std::make_pair(ans, fir)); }
     }
 }
 

@@ -4,37 +4,12 @@
 #include <CGAL/basic.h>
 #include <CGAL/Arr_overlay_2.h>
 
-#include <chrono>
+#include "timer.h"
+
 #include <iostream>
 #include <string>
 
 using namespace std;
-using namespace chrono::_V2;
-
-class Timer {
-public:
-    void start(std::string name);
-    void display();
-
-private:
-    system_clock::time_point startTime;
-    system_clock::time_point curTime;
-    string name;
-};
-
-void Timer::start(string name) {
-    this->name = name;
-    startTime = high_resolution_clock::now();
-}
-void Timer::display() {
-    typedef std::chrono::high_resolution_clock Time;
-    typedef std::chrono::milliseconds ms;
-    typedef std::chrono::duration<float> fsec;
-    curTime = high_resolution_clock::now();
-    fsec fs = curTime - startTime;
-    ms d = std::chrono::duration_cast<ms>(fs);
-    cout << name << " Completed in " << fs.count() << "s" << endl;
-}
 
 void createVerticalArrangement(Arrangement& arr1, int n) {
     for (int i = 1; i <= n; i++) { insert_non_intersecting_curve(arr1, Segment(Point(i, 1), Point(i, n))); }

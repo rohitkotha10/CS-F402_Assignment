@@ -1,10 +1,9 @@
 #pragma once
+
 #include <iostream>
 #include <fstream>
 #include <utility>
 #include <cmath>
-
-using namespace std;
 
 #define PREC 0.000001
 
@@ -51,12 +50,12 @@ struct Line {
     double m, c;  // y = mx + c;
 };
 
-ostream& operator<<(ostream& os, const Point& a) {
+std::ostream& operator<<(std::ostream& os, const Point& a) {
     os << '(' << a.x << ',' << a.y << ')';
     return os;
 }
 
-istream& operator>>(istream& is, Point& a) {
+std::istream& operator>>(std::istream& is, Point& a) {
     is >> a.x >> a.y;
     return is;
 }
@@ -96,12 +95,12 @@ int orientation(const Point& a, const Point& b, const Point& c) {
         return -1;
 }
 
-ostream& operator<<(ostream& os, const Line& a) {
+std::ostream& operator<<(std::ostream& os, const Line& a) {
     os << '{' << a.left << ',' << a.right << '}';
     return os;
 }
 
-istream& operator>>(istream& is, Line& cur) {
+std::istream& operator>>(std::istream& is, Line& cur) {
     Point a, b;
     is >> a >> b;
     if (compare(a.x, b.x) == -1 || (compare(a.x, b.x) == 0 && compare(a.x, b.x) == -1)) {
