@@ -3,10 +3,38 @@
 
 #include <iostream>
 #include <fstream>
+#include <chrono>
+#include <string>
 #include <vector>
 #include <set>
 
 using namespace std;
+using namespace chrono::_V2;
+
+class Timer {
+public:
+    void start(std::string name);
+    void display();
+
+private:
+    system_clock::time_point startTime;
+    system_clock::time_point curTime;
+    string name;
+};
+
+void Timer::start(string name) {
+    this->name = name;
+    startTime = high_resolution_clock::now();
+}
+void Timer::display() {
+    typedef std::chrono::high_resolution_clock Time;
+    typedef std::chrono::milliseconds ms;
+    typedef std::chrono::duration<float> fsec;
+    curTime = high_resolution_clock::now();
+    fsec fs = curTime - startTime;
+    ms d = std::chrono::duration_cast<ms>(fs);
+    cout << name << " Completed in " << fs.count() << "s" << endl;
+}
 
 double sweep_x;
 
@@ -32,7 +60,8 @@ int main(int argc, char** argv) {
         ifs.close();
     } else
         prearr = readInput(cin);
-
+    Timer t1;
+    t1.start("Line Sweep");
     events.processLines(prearr);
 
     int afterInter = 0;
@@ -65,12 +94,12 @@ int main(int argc, char** argv) {
         }
         events.pop();
 
-        ofs.open("event.txt", ios_base::out);
+        ofs.open("event.debug", ios_base::out);
         ofs << "Event Queue" << endl;
         ofs << events;
         ofs.close();
 
-        ofs.open("sweep.txt", ios_base::out);
+        ofs.open("sweep.debug", ios_base::out);
         ofs << "Sweep Status" << endl;
         ofs << sweepline;
         ofs.close();
@@ -78,4 +107,5 @@ int main(int argc, char** argv) {
 
     cout << ans.size() << endl;
     for (auto i: ans) cout << i << endl;
+    t1.display();
 }

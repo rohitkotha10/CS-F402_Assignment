@@ -1,2 +1,7 @@
+# output files
 *.exe
 *.out
+
+# files to test and debug
+*.debug 
+.vscode
